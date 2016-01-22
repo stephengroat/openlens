@@ -1,0 +1,3 @@
+include ':app', ':itextg-5.5.7', ':tess-two'
+include ':openCVLibrary300'
+project(':tess-two').projectDir = new File('tess/tess-two')
