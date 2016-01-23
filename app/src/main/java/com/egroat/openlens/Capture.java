@@ -65,14 +65,14 @@ public class Capture extends AppCompatActivity implements View.OnClickListener,
         final Point centerPoint = new Point(mCaptureImage.size().height/2, mCaptureImage.size().width/2);
 
         // http://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
-
+        // TODO: Check to make sure this works
         Arrays.sort(captureImageCorners, new Comparator<Point>() {
             @Override
             public int compare(Point lhs, Point rhs) {
                 if(lhs.x >= 0 && rhs.x < 0)
                     return 1;
                 else if(lhs.x == 0 && rhs.x == 0)
-                    return (lhs.y > rhs.y);
+                    return (lhs.y > rhs.y) ? 1 : -1;
 
                 double det = (lhs.x - centerPoint.x) * (rhs.y - centerPoint.y)
                         - (rhs.x - centerPoint.x) * (lhs.y - centerPoint.y);
@@ -80,8 +80,34 @@ public class Capture extends AppCompatActivity implements View.OnClickListener,
                     return 1;
                 else if(det > 0)
                     return -1;
+                
+                double d1 = Math.pow((lhs.x - centerPoint.x),2)
+                        + Math.pow((lhs.y - centerPoint.y),2);
+                double d2 = Math.pow((rhs.x - centerPoint.x),2)
+                        + Math.pow((rhs.y - centerPoint.y),2);
+                return (d1 > d2) ? 1 : -1;
+            }
+        });
+                Arrays.sort(rectCorners, new Comparator<Point>() {
+            @Override
+            public int compare(Point lhs, Point rhs) {
+                if(lhs.x >= 0 && rhs.x < 0)
+                    return 1;
+                else if(lhs.x == 0 && rhs.x == 0)
+                    return (lhs.y > rhs.y) ? 1 : -1;
 
-                return 0;
+                double det = (lhs.x - centerPoint.x) * (rhs.y - centerPoint.y)
+                        - (rhs.x - centerPoint.x) * (lhs.y - centerPoint.y);
+                if(det < 0)
+                    return 1;
+                else if(det > 0)
+                    return -1;
+                
+                double d1 = Math.pow((lhs.x - centerPoint.x),2)
+                        + Math.pow((lhs.y - centerPoint.y),2);
+                double d2 = Math.pow((rhs.x - centerPoint.x),2)
+                        + Math.pow((rhs.y - centerPoint.y),2);
+                return (d1 > d2) ? 1 : -1;
             }
         });
 
