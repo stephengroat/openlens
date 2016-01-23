@@ -53,35 +53,38 @@ public class Capture extends AppCompatActivity implements View.OnClickListener,
     private MatOfPoint2f            mRect               = null;
     private processImage            mProcessImage       = new processImage();
 
-    private static double angle(Point p1, Point p2, Point p0) {
-        double dx1 = p1.x - p0.x;
-        double dy1 = p1.y - p0.y;
-        double dx2 = p2.x - p0.x;
-        double dy2 = p2.y - p0.y;
-        return (dx1 * dx2 + dy1 * dy2) / Math.sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10);
-    }
-    private ArrayList<Point> sortCorners(ArrayList<Point> corners, Point center)
+    private Point[] sortCorners()
     {
-        ArrayList<Point> top = new ArrayList<>(), bot= new ArrayList<>();
+        Point[] captureImageCorners = new Point[] {new Point(0.0,0.0),
+                new Point(mCaptureImage.size().width,0.0),
+                new Point(0.0,mCaptureImage.size().height),
+                new Point(mCaptureImage.size().width,mCaptureImage.size().height)};
+        Point[] rectCorners = mRect.toArray();
 
-        for (int i = 0; i < corners.size(); i++)
-        {
-            if (corners.get(i).y < center.y)
-                top.add(corners.get(i));
-            else
-                bot.add(corners.get(i));
-        }
+        // Find Center
+        final Point centerPoint = new Point(mCaptureImage.size().height/2, mCaptureImage.size().width/2);
 
-        Point tl = top.get(0).x > top.get(1).x ? top.get(1) : top.get(0);
-        Point tr = top.get(0).x > top.get(1).x ? top.get(0) : top.get(1);
-        Point bl = bot.get(0).x > bot.get(1).x ? bot.get(1) : bot.get(0);
-        Point br = bot.get(0).x > bot.get(1).x ? bot.get(0) : bot.get(1);
+        // http://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
 
-        corners.clear();
-        corners.add(tl);
-        corners.add(tr);
-        corners.add(br);
-        corners.add(bl);
+        Arrays.sort(captureImageCorners, new Comparator<Point>() {
+            @Override
+            public int compare(Point lhs, Point rhs) {
+                if(lhs.x >= 0 && rhs.x < 0)
+                    return 1;
+                else if(lhs.x == 0 && rhs.x == 0)
+                    return (lhs.y > rhs.y);
+
+                double det = (lhs.x - centerPoint.x) * (rhs.y - centerPoint.y)
+                        - (rhs.x - centerPoint.x) * (lhs.y - centerPoint.y);
+                if(det < 0)
+                    return 1;
+                else if(det > 0)
+                    return -1;
+
+                return 0;
+            }
+        });
+
         return corners;
     }
 
@@ -133,10 +136,6 @@ public class Capture extends AppCompatActivity implements View.OnClickListener,
                 }
             }
             //magnitude();
-            Point[] corners = new Point[] {new Point(0.0,0.0),
-                    new Point(mCaptureImage.size().width,0.0),
-                    new Point(0.0,mCaptureImage.size().height),
-                    new Point(mCaptureImage.size().width,mCaptureImage.size().height)};
             Point[] corners2 = mRect.toArray();
 
 
@@ -148,10 +147,10 @@ public class Capture extends AppCompatActivity implements View.OnClickListener,
                     corners2[1].x,corners2[1].y,
                     corners2[2].x,corners2[2].y,
                     corners2[3].x,corners2[3].y);
-            dst_mat.put(0, 0, corners[0].x, corners[0].y,
-                    corners[1].x, corners[1].y,
-                    corners[2].x, corners[2].y,
-                    corners[3].x, corners[3].y);
+            dst_mat.put(0, 0, captureImageCorners[0].x, captureImageCorners[0].y,
+                    captureImageCorners[1].x, captureImageCorners[1].y,
+                    captureImageCorners[2].x, captureImageCorners[2].y,
+                    captureImageCorners[3].x, captureImageCorners[3].y);
             Mat perspectiveTransform = Imgproc.getPerspectiveTransform(src_mat,dst_mat);
             Imgproc.warpPerspective(mCaptureImage,dst,perspectiveTransform,mCaptureImage.size());
             //mCaptureImage = dst;
